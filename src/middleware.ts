@@ -1,4 +1,5 @@
 import { defineMiddleware } from 'astro:middleware'
+import { captureServerException } from '@lib/monitoring/logger'
 
 const LEGACY_DOMAINS = ['amalshalih.id', 'www.amalshalih.id']
 const CANONICAL_HOST = 'amalshalih.or.id'
@@ -10,7 +11,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		return context.redirect(`https://${CANONICAL_HOST}${pathname}`, 301)
 	}
 
-	const response = await next()
+	let response: Response
+	try {
+		response = await next()
+	} catch (error) {
+		// Route errors are caught by Astro's pipeline before reaching the Worker-level
+		// withSentry wrap, so report them here (production only).
+		if (import.meta.env.PROD) {
+			captureServerException(error, { source: 'astro-middleware', path: pathname })
+		}
+		throw error
+	}
 	const headers = new Headers(response.headers)
 
 	// Content-Security-Policy — ENFORCEMENT (production security)

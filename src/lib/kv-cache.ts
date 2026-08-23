@@ -4,6 +4,7 @@
  */
 
 import { env } from 'cloudflare:workers'
+import { describeError, logError, logInfo, logWarn } from '@lib/monitoring/logger'
 
 interface CachedValue<T> {
 	data: T
@@ -76,15 +77,27 @@ export async function cachedFetch<T>(options: {
 
 			// Stale but within staleTtl - return stale and revalidate in background
 			if (ageSeconds < staleTtl) {
+				logInfo('cache.stale_served', {
+					cache: key.split(':')[0],
+					age_seconds: Math.round(ageSeconds),
+				})
 				// Fire-and-forget revalidation
 				fetcher()
 					.then((fresh) => {
 						kvSet(key, { data: fresh, cachedAt: Date.now() }, staleTtl).catch((err) => {
 							console.error(`[KV Cache] Background set failed for key ${key}:`, err)
+							logWarn('cache.background_set_failed', {
+								cache: key.split(':')[0],
+								error_message: describeError(err),
+							})
 						})
 					})
 					.catch((err) => {
 						console.error(`[KV Cache] Background revalidation failed for key ${key}:`, err)
+						logWarn('cache.revalidation_failed', {
+							cache: key.split(':')[0],
+							error_message: describeError(err),
+						})
 					})
 
 				return cached.data
@@ -98,6 +111,10 @@ export async function cachedFetch<T>(options: {
 	} catch (error) {
 		console.error('[KV Cache] Fetch error:', error)
 		// Fallback to direct fetch if cache fails
+		logError('cache.fetch_fallback', {
+			cache: key.split(':')[0],
+			error_message: describeError(error),
+		})
 		return fetcher()
 	}
 }

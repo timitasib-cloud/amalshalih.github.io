@@ -61,7 +61,7 @@
 		"@openpanel/astro": "^1.4.1",
 		"@portabletext/to-html": "^5.0.2",
 		"@sanity/astro": "3.4.0",
-		"@sentry/astro": "10.55.0",
+		"@sentry/astro": "^10.70.0",
 		"@sentry/cloudflare": "^10.56.0",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "4.3.0",

@@ -176,13 +176,13 @@ const articleSchema = {
 		url: SITE.url,
 		logo: {
 			'@type': 'ImageObject',
-			url: SITE.url + '/logo-yayasan.webp',
+			url: `${SITE.url}/logo-yayasan.webp`,
 		},
 	},
 	image: post.data.image ? { '@type': 'ImageObject', url: post.data.image } : undefined,
 	mainEntityOfPage: {
 		'@type': 'WebPage',
-		'@id': SITE.url + '/blog/' + post.id,
+		'@id': `${SITE.url}/blog/${post.id}`,
 	},
 }
 ---

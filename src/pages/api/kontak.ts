@@ -1,5 +1,6 @@
 import { env } from 'cloudflare:workers'
 import { getResendApiKey } from '@lib/config'
+import { describeError, logError, logInfo, logWarn } from '@lib/monitoring/logger'
 import type { APIRoute } from 'astro'
 import { z } from 'zod'
 
@@ -152,12 +153,22 @@ async function sendResendEmail(
 
 		if (!response.ok) {
 			console.error('[Resend] Failed:', result)
+			// Handled rejection (user gets a friendly error) — log, don't raise an issue.
+			logWarn('email.send_failed', {
+				provider: 'resend',
+				status_code: response.status,
+			})
 			return { success: false, error: result.message || result.error || 'Resend API error' }
 		}
 
+		logInfo('email.sent', { provider: 'resend' })
 		return { success: true }
 	} catch (error: unknown) {
 		console.error('[Resend] Error:', error)
+		logError('email.send_exception', {
+			provider: 'resend',
+			error_message: describeError(error),
+		})
 		const message = error instanceof Error ? error.message : 'Unknown error'
 		return { success: false, error: message }
 	}

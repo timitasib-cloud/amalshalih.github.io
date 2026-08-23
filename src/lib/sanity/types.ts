@@ -165,3 +165,35 @@ export type SanityFaq = {
 	order: number
 	isActive: boolean
 }
+
+export interface SanityMitra {
+	_id: string
+	name: string
+	logoUrl?: string
+	url?: string
+}
+
+export interface SanityTestimoni {
+	_id: string
+	quote: string
+	author: string
+	role?: string
+	photoUrl?: string
+	rating?: number
+}
+
+export interface SanityBarkasProduct {
+	_id: string
+	productId: string
+	name: string
+	description?: string
+	category?: string
+	price?: number
+	originalPrice?: number
+	condition?: string
+	status?: string
+	images?: { url: string }[]
+	donor?: string
+	acquiredDate?: string
+	tags?: string[]
+}

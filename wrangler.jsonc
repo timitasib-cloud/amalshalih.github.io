@@ -1,10 +1,14 @@
 {
 	"name": "www",
-	"main": "@astrojs/cloudflare/entrypoints/server",
+	"main": "./src/server/sentry-worker.mjs",
 	"compatibility_date": "2026-06-01",
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"NODE_ENV": "production"
+		"NODE_ENV": "production",
+		// Server-side Sentry (@sentry/cloudflare withSentry reads these at runtime)
+		// DSN is a public identifier — same value is already shipped to browsers.
+		"SENTRY_DSN": "https://e99692c45d83afc7713330e193ea5a9a@o4511465723396096.ingest.us.sentry.io/4511465782509568",
+		"SENTRY_ENVIRONMENT": "production"
 	},
 	"kv_namespaces": [
 		{

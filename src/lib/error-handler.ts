@@ -47,6 +47,22 @@ export function handleError(
 						type: error instanceof Error ? error.name : 'UnknownError',
 					},
 				})
+
+				// Structured log alongside the issue — searchable, with primitive
+				// attributes only (Sentry log attributes do not support objects).
+				const attrs: Record<string, string | number | boolean> = {
+					error_type: error instanceof Error ? error.name : 'UnknownError',
+				}
+				for (const [key, value] of Object.entries(opts.context ?? {})) {
+					if (
+						typeof value === 'string' ||
+						typeof value === 'number' ||
+						typeof value === 'boolean'
+					) {
+						attrs[key] = value
+					}
+				}
+				Sentry.logger.error('client.error_captured', attrs)
 			})
 			.catch(() => {
 				// Sentry not available — silently ignore

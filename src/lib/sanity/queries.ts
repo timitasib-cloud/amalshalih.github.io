@@ -125,3 +125,38 @@ export const siteSettingsQuery = `*[_type == "siteSettings"][0] {
   notFoundTitle,
   notFoundDescription
 }`
+
+// Mitra & donatur (partners)
+export const mitraListQuery = `*[_type == "mitra" && isActive == true] | order(order asc) {
+  _id,
+  name,
+  "logoUrl": logo.asset->url,
+  url
+}`
+
+// Testimoni
+export const testimoniListQuery = `*[_type == "testimoni" && isActive == true] | order(order asc) {
+  _id,
+  quote,
+  author,
+  role,
+  "photoUrl": photo.asset->url,
+  rating
+}`
+
+// Produk BARKAS (barang bekas layak pakai)
+export const barkasProductListQuery = `*[_type == "barkasProduk" && isActive == true] | order(order asc) {
+  _id,
+  "productId": slug.current,
+  name,
+  description,
+  category,
+  price,
+  originalPrice,
+  condition,
+  status,
+  images[]{ "url": asset->url },
+  donor,
+  acquiredDate,
+  tags
+}`

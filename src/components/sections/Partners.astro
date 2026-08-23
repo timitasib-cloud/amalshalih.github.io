@@ -5,8 +5,11 @@ import Button from '@components/ui/Button.astro'
  *
  * Displays logos of partner organizations, donors, and collaborators.
  * Features infinite horizontal scroll animation.
+ * Content is managed via Sanity CMS (schema: mitra) with local fallback.
  */
 import Icon from '@components/ui/Icon.astro'
+import { getMitraList } from '@lib/sanity/client'
+import { withFallback } from '@lib/with-fallback'
 
 interface Partner {
 	name: string
@@ -19,20 +22,28 @@ interface Props {
 	title?: string
 }
 
+const DEFAULT_PARTNERS: Partner[] = [
+	{
+		name: 'Kementerian Sosial RI',
+		logo: '/partners/kemensos.png',
+		url: 'https://kemensos.go.id',
+	},
+	{ name: 'Baznas', logo: '/partners/baznas.png', url: 'https://baznas.go.id' },
+	{ name: 'Dompet Dhuafa', logo: '/partners/dompet-dhuafa.png', url: 'https://dompetdhuafa.org' },
+	{ name: 'Rumah Zakat', logo: '/partners/rumah-zakat.png', url: 'https://rumahzakat.org' },
+	{ name: 'Kitabisa.com', logo: '/partners/kitabisa.png', url: 'https://kitabisa.com' },
+	{ name: 'Pemkab Bantul', logo: '/partners/pemkab-bantul.png', url: 'https://bantulkab.go.id' },
+]
+
+// Sanity-first: tim media kelola mitra via Sanity, fallback ke daftar lokal
+const sanityPartners = await withFallback(() => getMitraList(), [], 'Mitra list fetch')
+const sanityMapped: Partner[] = sanityPartners
+	.filter((m) => Boolean(m.logoUrl))
+	.map((m) => ({ name: m.name, logo: m.logoUrl as string, url: m.url || undefined }))
+
 const {
 	title = 'Mitra & Donatur Kami',
-	partners = [
-		{
-			name: 'Kementerian Sosial RI',
-			logo: '/partners/kemensos.png',
-			url: 'https://kemensos.go.id',
-		},
-		{ name: 'Baznas', logo: '/partners/baznas.png', url: 'https://baznas.go.id' },
-		{ name: 'Dompet Dhuafa', logo: '/partners/dompet-dhuafa.png', url: 'https://dompetdhuafa.org' },
-		{ name: 'Rumah Zakat', logo: '/partners/rumah-zakat.png', url: 'https://rumahzakat.org' },
-		{ name: 'Kitabisa.com', logo: '/partners/kitabisa.png', url: 'https://kitabisa.com' },
-		{ name: 'Pemkab Bantul', logo: '/partners/pemkab-bantul.png', url: 'https://bantulkab.go.id' },
-	],
+	partners = sanityMapped.length > 0 ? sanityMapped : DEFAULT_PARTNERS,
 } = Astro.props
 ---
 

@@ -1,25 +1,42 @@
 import { sanityClient } from 'sanity:client'
 import { cachedFetch, sanityCacheKey } from '@lib/kv-cache'
+import { describeError, logError } from '@lib/monitoring/logger'
 import {
 	bankDonasiQuery,
+	barkasProductListQuery,
 	blogPostItemQuery,
 	blogPostListQuery,
 	faqListQuery,
 	kegiatanItemQuery,
 	kegiatanListQuery,
+	mitraListQuery,
 	pengurusQuery,
 	programListQuery,
 	siteSettingsQuery,
+	testimoniListQuery,
 } from './queries'
 import type {
 	SanityBankDonasi,
+	SanityBarkasProduct,
 	SanityBlogPost,
 	SanityFaq,
 	SanityKegiatan,
+	SanityMitra,
 	SanityPengurus,
 	SanityProgram,
 	SanitySiteSettings,
+	SanityTestimoni,
 } from './types'
+
+/**
+ * Sanity failures degrade gracefully (fallback data is returned), so they are
+ * logged as structured events instead of reported as exceptions — a CMS outage
+ * should not flood the issues stream.
+ */
+function reportSanityFailure(operation: string, error: unknown): void {
+	console.error(`[Sanity] ${operation} failed:`, error)
+	logError('sanity.fetch_failed', { operation, error_message: describeError(error) })
+}
 
 export async function getKegiatanList(): Promise<SanityKegiatan[]> {
 	try {
@@ -28,7 +45,7 @@ export async function getKegiatanList(): Promise<SanityKegiatan[]> {
 			fetcher: () => sanityClient.fetch(kegiatanListQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch kegiatan list:', error)
+		reportSanityFailure('getKegiatanList', error)
 		return []
 	}
 }
@@ -40,7 +57,7 @@ export async function getKegiatanItem(slug: string): Promise<SanityKegiatan | nu
 			fetcher: () => sanityClient.fetch(kegiatanItemQuery, { slug }),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch kegiatan item:', error)
+		reportSanityFailure('getKegiatanItem', error)
 		return null
 	}
 }
@@ -52,7 +69,7 @@ export async function getProgramList(): Promise<SanityProgram[]> {
 			fetcher: () => sanityClient.fetch(programListQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch program list:', error)
+		reportSanityFailure('getProgramList', error)
 		return []
 	}
 }
@@ -64,7 +81,7 @@ export async function getBankDonasi(): Promise<SanityBankDonasi[]> {
 			fetcher: () => sanityClient.fetch(bankDonasiQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch bank donasi:', error)
+		reportSanityFailure('getBankDonasi', error)
 		return []
 	}
 }
@@ -76,7 +93,43 @@ export async function getPengurus(): Promise<SanityPengurus[]> {
 			fetcher: () => sanityClient.fetch(pengurusQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch pengurus:', error)
+		reportSanityFailure('getPengurus', error)
+		return []
+	}
+}
+
+export async function getMitraList(): Promise<SanityMitra[]> {
+	try {
+		return await cachedFetch({
+			key: sanityCacheKey(mitraListQuery),
+			fetcher: () => sanityClient.fetch(mitraListQuery),
+		})
+	} catch (error) {
+		reportSanityFailure('getMitraList', error)
+		return []
+	}
+}
+
+export async function getTestimoniList(): Promise<SanityTestimoni[]> {
+	try {
+		return await cachedFetch({
+			key: sanityCacheKey(testimoniListQuery),
+			fetcher: () => sanityClient.fetch(testimoniListQuery),
+		})
+	} catch (error) {
+		reportSanityFailure('getTestimoniList', error)
+		return []
+	}
+}
+
+export async function getBarkasProducts(): Promise<SanityBarkasProduct[]> {
+	try {
+		return await cachedFetch({
+			key: sanityCacheKey(barkasProductListQuery),
+			fetcher: () => sanityClient.fetch(barkasProductListQuery),
+		})
+	} catch (error) {
+		reportSanityFailure('getBarkasProducts', error)
 		return []
 	}
 }
@@ -88,7 +141,7 @@ export async function getSiteSettings(): Promise<SanitySiteSettings | null> {
 			fetcher: () => sanityClient.fetch(siteSettingsQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch site settings:', error)
+		reportSanityFailure('getSiteSettings', error)
 		return null
 	}
 }
@@ -98,7 +151,7 @@ export async function getFaqList(): Promise<SanityFaq[] | null> {
 		const faqs = await sanityClient.fetch<SanityFaq[]>(faqListQuery)
 		return faqs || []
 	} catch (error) {
-		console.error('Failed to fetch FAQ from Sanity:', error)
+		reportSanityFailure('getFaqList', error)
 		return []
 	}
 }
@@ -110,7 +163,7 @@ export async function getBlogPostList(): Promise<SanityBlogPost[]> {
 			fetcher: () => sanityClient.fetch(blogPostListQuery),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch blog post list:', error)
+		reportSanityFailure('getBlogPostList', error)
 		return []
 	}
 }
@@ -122,7 +175,7 @@ export async function getBlogPost(slug: string): Promise<SanityBlogPost | null> 
 			fetcher: () => sanityClient.fetch(blogPostItemQuery, { slug }),
 		})
 	} catch (error) {
-		console.error('[Sanity] Failed to fetch blog post:', error)
+		reportSanityFailure('getBlogPost', error)
 		return null
 	}
 }

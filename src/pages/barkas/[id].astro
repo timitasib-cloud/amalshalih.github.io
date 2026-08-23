@@ -1,12 +1,15 @@
 ---
 import Lightbox from '@components/gallery/Lightbox.astro'
-import barkasData from '@data/barkas-products.json'
 import BaseLayout from '@layouts/BaseLayout.astro'
+import {
+	barkasCategories as categories,
+	barkasProgramInfo as programInfo,
+	resolveBarkasProducts,
+} from '@lib/barkas'
 
 const { id } = Astro.params
-const product = barkasData.products.find((p) => p.id === id)
-const categories = barkasData.categories
-const programInfo = barkasData.programInfo
+const products = await resolveBarkasProducts()
+const product = products.find((p) => p.id === id)
 
 if (!product) {
 	return Astro.redirect('/404')
@@ -175,7 +178,7 @@ const whatsappUrl = `https://wa.me/${programInfo.contact.whatsapp.replace(/\D/g,
               </div>
               <div class="meta-item">
                 <strong>Diterima</strong>
-                <span>{new Date(product.acquiredDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <span>{product.acquiredDate ? new Date(product.acquiredDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</span>
               </div>
             </div>
 

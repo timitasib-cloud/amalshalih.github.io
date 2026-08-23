@@ -1,8 +1,12 @@
 ---
-import barkasData from '@data/barkas-products.json'
 import BaseLayout from '@layouts/BaseLayout.astro'
+import {
+	barkasCategories as categories,
+	barkasProgramInfo as programInfo,
+	resolveBarkasProducts,
+} from '@lib/barkas'
 
-const { products, categories, programInfo } = barkasData
+const products = await resolveBarkasProducts()
 
 // Filter hanya produk yang available
 const availableProducts = products.filter((p) => p.status === 'available')
@@ -161,7 +165,7 @@ const productSchema = {
                 <div class="donor-info">
                   <small>
                     🎁 Donatur: {product.donor}<br/>
-                    📅 Diterima: {new Date(product.acquiredDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    📅 Diterima: {product.acquiredDate ? new Date(product.acquiredDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
                   </small>
                 </div>
               </div>

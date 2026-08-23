@@ -34,7 +34,7 @@ interface CompressionResult {
 async function ensureDir(dir: string) {
 	try {
 		await mkdir(dir, { recursive: true })
-	} catch (error) {
+	} catch (_error) {
 		// Ignore if exists
 	}
 }
@@ -73,8 +73,8 @@ async function downloadImage(
 }
 
 async function compressImage(inputPath: string): Promise<CompressionResult | null> {
-	const fileName = inputPath.split('/').pop()!
-	const ext = fileName.split('.').pop()!.toLowerCase()
+	const fileName = inputPath.split('/').pop() ?? inputPath
+	const ext = fileName.split('.').pop()?.toLowerCase()
 	const baseName = fileName.substring(0, fileName.lastIndexOf('.'))
 
 	let compressedPath: string
@@ -217,7 +217,7 @@ function formatBytes(bytes: number): string {
 	const k = 1024
 	const sizes = ['Bytes', 'KB', 'MB', 'GB']
 	const i = Math.floor(Math.log(bytes) / Math.log(k))
-	return Math.round((bytes / k ** i) * 100) / 100 + ' ' + sizes[i]
+	return `${Math.round((bytes / k ** i) * 100) / 100} ${sizes[i]}`
 }
 
 async function generateReport(results: CompressionResult[]) {
@@ -293,7 +293,7 @@ ${results.map((r) => `| ${r.originalName} | ${r.compressedName} | ${r.reduction}
 	console.log(`\n📄 Report saved to: ${reportPath}`)
 
 	// Also print summary
-	console.log('\n' + '='.repeat(60))
+	console.log(`\n${'='.repeat(60)}`)
 	console.log('📊 COMPRESSION SUMMARY')
 	console.log('='.repeat(60))
 	console.log(`Total Images: ${results.length}`)

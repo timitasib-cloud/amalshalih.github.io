@@ -48,7 +48,7 @@ describe('articleSchema', () => {
 	it('includes image when provided', () => {
 		const result = articleSchema({ ...base, image: 'https://example.com/img.jpg' })
 		expect(result.image).toBeDefined()
-		expect(result.image!.url).toBe('https://example.com/img.jpg')
+		expect(result.image?.url).toBe('https://example.com/img.jpg')
 	})
 
 	it('omits image key when not provided', () => {

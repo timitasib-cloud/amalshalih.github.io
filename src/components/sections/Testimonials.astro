@@ -5,8 +5,11 @@ import Button from '@components/ui/Button.astro'
  *
  * Social proof section displaying testimonials from beneficiaries, donors, and partners.
  * Features carousel-style layout with quotes, photos, and ratings.
+ * Content is managed via Sanity CMS (schema: testimoni) with local fallback.
  */
 import Icon from '@components/ui/Icon.astro'
+import { getTestimoniList } from '@lib/sanity/client'
+import { withFallback } from '@lib/with-fallback'
 
 interface Testimonial {
 	quote: string
@@ -22,39 +25,51 @@ interface Props {
 	subtitle?: string
 }
 
+const DEFAULT_TESTIMONIALS: Testimonial[] = [
+	{
+		quote:
+			'Alhamdulillah, berkat bantuan beasiswa dari Yayasan ASIB, anak saya bisa melanjutkan pendidikan ke perguruan tinggi. Sekarang dia sudah menjadi guru dan mengabdi di kampung halaman.',
+		author: 'Ibu Siti Maimunah',
+		role: 'Orang Tua Penerima Manfaat Beasiswa',
+		rating: 5,
+	},
+	{
+		quote:
+			'Program santunan sembako bulanan sangat membantu kami para lansia yang sudah tidak mampu bekerja lagi. Semoga Yayasan ASIB semakin berjaya dan bisa membantu lebih banyak lagi.',
+		author: 'Bapak Suharto',
+		role: 'Penerima Santunan Lansia',
+		rating: 5,
+	},
+	{
+		quote:
+			'Saya rutin berdonasi melalui Yayasan ASIB karena transparan dan laporan kegiatannya jelas. Alhamdulillah, donasi saya tersalurkan dengan baik untuk yang membutuhkan.',
+		author: 'Ahmad Rizki Pratama',
+		role: 'Donatur Tetap',
+		rating: 5,
+	},
+	{
+		quote:
+			"Kegiatan wisuda Tahfidz yang diselenggarakan Yayasan ASIB sangat menginspirasi. Anak-anak tidak hanya hafal Qur'an tapi juga mendapat pendidikan karakter yang baik.",
+		author: 'Ustadzah Hj. Nur Aisyah',
+		role: 'Pengajar TPQ',
+		rating: 5,
+	},
+]
+
+// Sanity-first: tim media kelola testimoni via Sanity, fallback ke daftar lokal
+const sanityTestimonials = await withFallback(() => getTestimoniList(), [], 'Testimoni list fetch')
+const sanityMapped: Testimonial[] = sanityTestimonials.map((t) => ({
+	quote: t.quote,
+	author: t.author,
+	role: t.role || '',
+	photo: t.photoUrl || undefined,
+	rating: t.rating || 5,
+}))
+
 const {
 	title = 'Kata Mereka Tentang Kami',
 	subtitle = 'Cerita dampak nyata dari para penerima manfaat, donatur, dan mitra kami',
-	testimonials = [
-		{
-			quote:
-				'Alhamdulillah, berkat bantuan beasiswa dari Yayasan ASIB, anak saya bisa melanjutkan pendidikan ke perguruan tinggi. Sekarang dia sudah menjadi guru dan mengabdi di kampung halaman.',
-			author: 'Ibu Siti Maimunah',
-			role: 'Orang Tua Penerima Manfaat Beasiswa',
-			rating: 5,
-		},
-		{
-			quote:
-				'Program santunan sembako bulanan sangat membantu kami para lansia yang sudah tidak mampu bekerja lagi. Semoga Yayasan ASIB semakin berjaya dan bisa membantu lebih banyak lagi.',
-			author: 'Bapak Suharto',
-			role: 'Penerima Santunan Lansia',
-			rating: 5,
-		},
-		{
-			quote:
-				'Saya rutin berdonasi melalui Yayasan ASIB karena transparan dan laporan kegiatannya jelas. Alhamdulillah, donasi saya tersalurkan dengan baik untuk yang membutuhkan.',
-			author: 'Ahmad Rizki Pratama',
-			role: 'Donatur Tetap',
-			rating: 5,
-		},
-		{
-			quote:
-				"Kegiatan wisuda Tahfidz yang diselenggarakan Yayasan ASIB sangat menginspirasi. Anak-anak tidak hanya hafal Qur'an tapi juga mendapat pendidikan karakter yang baik.",
-			author: 'Ustadzah Hj. Nur Aisyah',
-			role: 'Pengajar TPQ',
-			rating: 5,
-		},
-	],
+	testimonials = sanityMapped.length > 0 ? sanityMapped : DEFAULT_TESTIMONIALS,
 } = Astro.props
 ---
 

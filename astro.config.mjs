@@ -75,6 +75,14 @@ export default defineConfig({
 				org: 'yayasan-amal-shalih-insan-bant',
 				project: 'amalshalih',
 				authToken: process.env.SENTRY_AUTH_TOKEN,
+				// Client init lives under src/lib/monitoring/ — integration only auto-detects project root
+				clientInitPath: 'src/lib/monitoring/sentry.client.config.js',
+				// Server-side: on Astro 6 + @astrojs/cloudflare v13 the integration's automatic
+				// withSentry() wrap no longer applies, so src/server/sentry-worker.mjs (wrangler
+				// "main") wraps the built entry manually; DSN comes from wrangler.jsonc vars.
+				sourcemaps: {
+					assets: ['dist/**/*'],
+				},
 			}),
 	].filter(Boolean),
 	vite: {
@@ -92,6 +100,9 @@ export default defineConfig({
 		},
 		build: {
 			sourcemap: true,
+			// Intermediate worker-entry bundling phase exceeds 768 kB; final chunks stay
+			// well below this (@sanity/astro's chunk-warning plugin reuses this setting).
+			chunkSizeWarningLimit: 1024,
 		},
 		// @ts-expect-error — Vite version mismatch between Astro bundled & project dep
 		plugins: [tailwindcss()],
