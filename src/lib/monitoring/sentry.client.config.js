@@ -12,5 +12,20 @@ if (import.meta.env.PROD) {
 		],
 		// Enable logs to be sent to Sentry
 		enableLogs: true,
+		beforeSend(event) {
+			// Buang TypeError push-on-undefined yang berasal dari loader gtag
+			// first-party Google Tag Gateway (/vfq0/*) — third-party, bukan kode
+			// aplikasi. Frame klien mentah bisa memuat frame tambahan di luar
+			// /vfq0/, jadi cukup SATU frame cocok + pesan spesifik.
+			const values = event.exception?.values ?? []
+			const fromTagGateway = values.some(
+				(v) =>
+					/Cannot read properties of undefined \(reading 'push'\)/.test(v.value ?? '') &&
+					(v.stacktrace?.frames ?? []).some((f) => (f.filename ?? '').includes('/vfq0/')),
+			)
+			if (fromTagGateway) return null
+			if ((event.culprit ?? '').includes('/vfq0/')) return null
+			return event
+		},
 	})
 }
