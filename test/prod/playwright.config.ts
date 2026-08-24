@@ -14,7 +14,7 @@ export default defineConfig({
 	timeout: 90_000,
 	expect: { timeout: 10_000 },
 	fullyParallel: true,
-	workers: 4,
+	workers: 2,
 	// retries=1 hanya menelan flakiness infrastruktur (net::ERR_TIMED_OUT saat
 	// navigasi). Collector zero-tolerance tetap berjalan di tiap attempt, jadi
 	// error aplikasi nyata tetap menggagalkan test di kedua percobaan.
