@@ -121,3 +121,8 @@ graphify-out/
 # Emacs backup files
 *~
 .\#*
+
+# Live production test artifacts
+test/prod/report
+test/prod/artifacts
+test/prod/run-start.txt

@@ -18,6 +18,7 @@ export default defineConfig({
 			'test/integration/**',
 			'test/e2e/**',
 			'test/lighthouse/**',
+			'test/prod/**',
 			'node_modules/**',
 			'.opencode/**',
 			'studio-amalshalih/**',

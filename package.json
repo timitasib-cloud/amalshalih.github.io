@@ -18,6 +18,7 @@
 		"test:watch": "vitest",
 		"test:changed": "vitest run --changed",
 		"test:e2e": "playwright test",
+		"test:prod": "playwright test --config=test/prod/playwright.config.ts",
 		"typecheck": "astro check",
 		"audit": "bun run scripts/audit-frontend-checklist.mjs src",
 		"lint": "biome check .",
