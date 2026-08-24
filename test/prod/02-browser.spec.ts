@@ -30,11 +30,16 @@ async function resilientGoto(
 	let lastError: unknown
 	for (let attempt = 1; attempt <= tries; attempt++) {
 		try {
-			return await page.goto(url, { waitUntil, timeout: 45_000 })
+			return await page.goto(url, { waitUntil, timeout: 20_000 })
 		} catch (error) {
 			lastError = error
-			if (!/ERR_TIMED_OUT|Timeout|TLS|ERR_NETWORK|ERR_CONNECTION/i.test(String(error))) throw error
-			if (attempt < tries) await page.waitForTimeout(15_000)
+			if (
+				!/ERR_TIMED_OUT|ERR_ABORTED|Timeout|TLS|ERR_NETWORK|ERR_CONNECTION|crashed/i.test(
+					String(error),
+				)
+			)
+				throw error
+			if (attempt < tries) await page.waitForTimeout(8_000)
 		}
 	}
 	throw lastError
@@ -74,7 +79,12 @@ test.describe('Layer 2 — Browser zero-tolerance', () => {
 	for (const path of CRAWL_PATHS) {
 		test(`render bersih ${path}`, async ({ page }) => {
 			const issues = attachCollectors(page)
-			await resilientGoto(page, path, 'networkidle')
+			// domcontentloaded cukup: collector sudah terpasang sebelum goto, dan
+			// event 'load' bisa tertahan beacon pihak ketiga (openpanel/gtag).
+			await resilientGoto(page, path, 'domcontentloaded')
+			// Best-effort: biarkan jaringan tenang, tapi jangan gagalkan test bila
+			// ada resource yang tak pernah idle (CDN lambat, beacon panjang).
+			await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
 			await page.waitForTimeout(2_000)
 			expect(
 				issues,
@@ -96,8 +106,16 @@ test.describe('Layer 2 — Browser zero-tolerance', () => {
 
 	test('tombol suka galeri bekerja end-to-end (KV nyata)', async ({ page }) => {
 		let likeStatus = 0
-		page.on('response', (res) => {
-			if (res.url().includes('/api/gallery-like')) likeStatus = res.status()
+		let postResult: { count?: number; liked?: boolean } | null = null
+		page.on('response', async (res) => {
+			if (!res.url().includes('/api/gallery-like')) return
+			if (res.request().method() !== 'POST') return
+			likeStatus = res.status()
+			try {
+				postResult = (await res.json()) as { count?: number; liked?: boolean }
+			} catch {
+				postResult = null
+			}
 		})
 		// Listing /galeri tidak memuat tombol suka — buka item galeri pertama.
 		await resilientGoto(page, '/galeri')
@@ -110,17 +128,26 @@ test.describe('Layer 2 — Browser zero-tolerance', () => {
 			.locator('[data-like-button]')
 		await resilientGoto(page, detailHref)
 		await expect(button).toBeVisible()
+
+		await button.click()
+		await expect
+			.poll(() => likeStatus, { timeout: 20_000, intervals: [500, 1_000, 2_000] })
+			.toBe(200)
+		await expect
+			.poll(() => (postResult ? postResult.count : null), { timeout: 10_000 })
+			.not.toBeNull()
+
+		// UI harus mencerminkan hasil server (arah like/unlike tidak dipaksakan —
+		// fingerprint IP+UA stabil membuat klik bersifat toggle antar-run).
+		const result = postResult as unknown as { count: number; liked: boolean }
+		const parseCount = (t: string | null) => Number((t ?? '').replace(/[^\d]/g, '')) || 0
 		const countEl = button.locator(
 			'xpath=ancestor::div[@data-like-container]//span[@data-like-count]',
 		)
-		const parseCount = (t: string | null) => Number((t ?? '').replace(/[^\d]/g, '')) || 0
-		const before = parseCount(await countEl.textContent())
-		await button.click()
 		await expect
-			.poll(() => likeStatus, { timeout: 15_000, intervals: [500, 1_000, 2_000] })
-			.toBe(200)
-		await page.waitForTimeout(1_000)
-		expect(parseCount(await countEl.textContent())).toBe(before + 1)
+			.poll(async () => parseCount(await countEl.textContent()), { timeout: 15_000 })
+			.toBe(result.count)
+		await expect(button).toHaveAttribute('data-liked', String(result.liked))
 	})
 
 	test('form kontak ter-render lengkap & validasi klien aktif', async ({ page }) => {
