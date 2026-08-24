@@ -43,7 +43,9 @@ const productSchema = {
 			'@type': 'Product',
 			name: product.name,
 			description: product.description,
-			image: product.images.map((img) => `https://amalshalih.or.id${img}`),
+			image: product.images.map((img) =>
+				/^(https?:)?\/\//i.test(img) ? img : `https://amalshalih.or.id${img}`,
+			),
 			offers: {
 				'@type': 'Offer',
 				price: product.price,

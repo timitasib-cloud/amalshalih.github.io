@@ -17,6 +17,9 @@ if (!product) {
 
 const isDev = import.meta.env.DEV
 const imageBaseUrl = isDev ? '' : 'https://amalshalih.or.id'
+// URL dari Sanity sudah absolut (https://cdn.sanity.io/...); jangan diberi prefix ganda.
+const resolveImageUrl = (img: string) =>
+	/^(https?:)?\/\//i.test(img) ? img : `${imageBaseUrl}${img}`
 
 const categoryName = categories.find((c) => c.id === product.category)?.name || ''
 
@@ -38,7 +41,7 @@ const productSchema = {
 	'@type': 'Product',
 	name: product.name,
 	description: product.description,
-	image: product.images.map((img) => `${imageBaseUrl}${img}`),
+	image: product.images.map(resolveImageUrl),
 	sku: product.id,
 	category: categoryName,
 	condition:
@@ -62,14 +65,14 @@ const productSchema = {
 	},
 }
 
-const imageUrls = product.images.map((img) => `${imageBaseUrl}${img}`)
+const imageUrls = product.images.map(resolveImageUrl)
 const barkasPath = '/barkas'
 
 const lightboxImages = product.images.map((img, index) => ({
 	id: `${product.id}-${index}`,
 	name: `${product.name} - Foto ${index + 1}`,
-	thumbnailUrl: `${imageBaseUrl}${img}`,
-	fullUrl: `${imageBaseUrl}${img}`,
+	thumbnailUrl: resolveImageUrl(img),
+	fullUrl: resolveImageUrl(img),
 }))
 
 const whatsappUrl = `https://wa.me/${programInfo.contact.whatsapp.replace(/\D/g, '')}?text=Halo%20ASIB,%20saya%20ingin%20membeli%20${encodeURIComponent(product.name)}%20(Rp%20${product.price.toLocaleString('id-ID')})`
